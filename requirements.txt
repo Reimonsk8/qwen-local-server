@@ -1,0 +1,29 @@
+# Core Dependencies
+torch>=2.0.0
+transformers>=4.36.0
+accelerate>=0.25.0
+bitsandbytes>=0.41.0
+
+# Web Server
+fastapi>=0.95.0
+uvicorn>=0.22.0
+python-multipart>=0.0.6
+sse-starlette>=1.8.0
+python-jose[cryptography]>=3.3.0
+python-dotenv>=1.0.0
+
+# Utilities
+numpy>=1.24.0
+tqdm>=4.65.0
+requests>=2.28.2
+safetensors>=0.3.1
+huggingface-hub>=0.16.4
+
+# Testing
+pytest>=7.3.1
+httpx>=0.24.0
+
+# Optional (for development)
+black>=23.3.0
+isort>=5.12.0
+flake8>=6.0.0
