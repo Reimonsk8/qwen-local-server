@@ -1,5 +1,7 @@
 # Qwen Local Server
 
+![Qwen Architecture](assets/qwen.png)
+
 A full-featured local server implementation for running the **Qwen** (Qwen2.5) large language model with **GPU acceleration**, **quantization support** and **OpenAI-compatible API**.
 
 Perfect for developers who want to run powerful open-source LLMs locally—securely, privately, and efficiently.
@@ -25,13 +27,20 @@ Perfect for developers who want to run powerful open-source LLMs locally—secur
 
 ## 🚀 Quick Start
 
-1. **Clone the repository**
+1. **Install the qwencoder CLI tool**
+    First, ensure you have Node.js and npm installed. Then install qwencoder globally so it’s available system-wide. This tool uses the tokenizer configuration from your local model path (as defined in your .env file):
+
+    ```bash
+    npm install -g qwencoder
+    ```
+
+2. **Clone the repository**
    ```bash
    git clone https://github.com/Reimonsk8/qwen-local-server.git
    cd qwen-local-server
    ```
 
-2. **Set up Python environment**
+3. **Set up Python environment**
    ```bash
    # Create and activate virtual environment
    python -m venv venv
@@ -42,6 +51,10 @@ Perfect for developers who want to run powerful open-source LLMs locally—secur
    
    # Install dependencies
    pip install -r requirements.txt
+   
+   # Copy and configure environment variables
+   cp .env-example .env
+   # Edit .env to set your API key and model path if needed
    ```
 
 ## 📥 Downloading the Model
@@ -61,15 +74,15 @@ Perfect for developers who want to run powerful open-source LLMs locally—secur
    models/
    └── Qwen2.5-7B-Instruct/
        ├── config.json
-       ├── model.safetensors  # or pytorch_model.bin
-       └── tokenizer.json
+       ├── model.safetensors          # or pytorch_model.bin
+       ├── tokenizer.json
+       ├── tokenizer_config.json
+       ├── vocab.json
+       ├── special_tokens_map.json
+       └── generation_config.json
    ```
 
-### Option B: Auto-download via CLI (experimental)
-```bash
-python download_model.py --model-name Qwen/Qwen2.5-7B-Instruct --output-dir ./models
-```
-*Note: Requires Hugging Face token if the model is gated.*
+   > **Note**: Make sure all tokenizer files are present to avoid errors. The tokenizer may fail without `tokenizer_config.json` and other supporting files.
 
 ## 🚀 Running the Server
 
@@ -82,17 +95,16 @@ Server will be available at: http://localhost:8000/v1
 ### Python (OpenAI SDK)
 ```python
 from openai import OpenAI
-
 client = OpenAI(
     base_url="http://localhost:8000/v1",
     api_key="your-secret-api-key-here"
 )
 
-completion = client.chat.completions.create(
-    model="qwen2.5-coder-7b-instruct",
-    messages=[{"role": "user", "content": "Write a Python function to reverse a string."}],
-    stream=False  # or True for streaming
-)
+        completion = client.chat.completions.create(
+            model="qwen2.5-7b-instruct",  # Default model, matches the one in .env
+            messages=[{"role": "user", "content": "Write a Python function to reverse a string."}],
+            stream=False  # or True for streaming
+        )
 
 print(completion.choices[0].message.content)
 ```
@@ -102,80 +114,55 @@ print(completion.choices[0].message.content)
 curl http://localhost:8000/v1/chat/completions \
   -H "Authorization: Bearer your-secret-api-key-here" \
   -H "Content-Type: application/json" \
-  -d '{
-    "model": "qwen2.5-coder-7b-instruct",
+            "model": "qwen2.5-7b-instruct",  # Using the default model
     "messages": [{"role": "user", "content": "Hello!"}],
     "stream": false
   }'
 ```
 
-### Streaming (SSE)
-Set "stream": true to receive tokens in real-time via Server-Sent Events (SSE).
-
-### CLI Tools
-
-#### Tokenizer
-```bash
-qwencoder "Hello, world!" --model ./models/Qwen2.5-7B-Instruct
-```
-
-#### Test Server Health
-```bash
-python test_api.py --base-url http://localhost:8000/v1 --api-key your-secret-api-key-here
-```
-
-## ⚙️ Configuration Options (.env)
+{{ ... }}
 
 The following environment variables can be set to customize the server's behavior:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `OPENAI_API_KEY` | (required) | Your API key for authentication |
+| `OPENAI_API_KEY` | (required but value can be anything) | API key |
 | `OPENAI_MODEL` | `qwen2.5-7b-instruct` | Model to use |
-| `MODEL_PATH` | `./models/Qwen2.5-7B-Instruct` | Path to model files |
 | `MAX_MODEL_LENGTH` | `4096` | Maximum context length |
 | `LOAD_IN_4BIT` | `true` | Enable 4-bit quantization |
 | `LOAD_IN_8BIT` | `false` | Enable 8-bit quantization (mutually exclusive with 4-bit) |
 | `DEVICE` | `cuda` | `cuda` for GPU or `cpu` (not recommended) |
 | `HOST` | `0.0.0.0` | Host to bind the server to |
-| `PORT` | `8000` | Port to run the server on |
-
-## 🔒 Security Note
-
-Never expose the server publicly without authentication.
-
-## 🐞 Troubleshooting
-
-If you encounter any issues, refer to the following table for solutions:
-
-| Issue | Solution |
-|-------|----------|
-| **CUDA Out of Memory** | Enable `LOAD_IN_4BIT=true` or reduce `MAX_MODEL_LENGTH` |
-| **Model not found** | Verify `MODEL_PATH` points to the correct directory and file structure |
-| **Slow inference on CPU** | Use GPU for better performance; quantization has limited benefits on CPU |
-| **Tokenizer errors** | Ensure `tokenizer.json` and `vocab.json` exist in the model directory |
-
-## 🧪 Testing
-
-Run unit and integration tests:
+{{ ... }}
 
 ```bash
 python -m pytest tests/
 ```
 
+## 📁 Project Structure
+
 ```
+qwen-local-server/
+├── serve_qwen_local.py    # Main FastAPI server
 ├── download_model.py      # Model downloader
 ├── test_api.py            # API test utility
+├── requirements.txt       # Python dependencies
 ├── .env-example           # Example environment variables
+├── assets/                # Static assets (images, etc.)
 ├── models/                # Store downloaded models here
 └── tests/                 # Test suite
 ```
+
+> **Note on Model Variants**:
+> - `Qwen2.5-7B-Instruct`: General-purpose instruction model (recommended default)
+> - `Qwen2.5-Coder-7B-Instruct`: Specialized for code generation tasks
+> Update the `OPENAI_MODEL` in `.env` and model path as needed for different variants.
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
 ## 🙏 Acknowledgements
-
+{{ ... }}
 - Qwen Team for the amazing open-source models
 - Hugging Face for the Transformers library and model hosting
 - OpenAI for the API specification
